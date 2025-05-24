@@ -16,25 +16,13 @@ def scan_txt_files(directory):
     print("-" * 52)
 
     total_size = 0
-    folder_summary = {}
-
     for file in txt_files:
         size_kb = file.stat().st_size / 1024
         total_size += size_kb
         print(f"{str(file.relative_to(directory)):<40} {size_kb:>10.1f}")
 
-        folder = str(file.parent.relative_to(directory))
-        if folder not in folder_summary:
-            folder_summary[folder] = {'count': 0, 'size': 0}
-        folder_summary[folder]['count'] += 1
-        folder_summary[folder]['size'] += size_kb
-
     print("-" * 52)
     print(f"Total size: {total_size:.1f} KB\n")
-
-    print("Summary by Folder:")
-    for folder, stats in folder_summary.items():
-        print(f"{folder:<20} — {stats['count']} files, {stats['size']:.1f} KB")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Recursively scan directory for .txt files.")
