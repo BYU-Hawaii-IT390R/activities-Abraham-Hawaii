@@ -1,7 +1,7 @@
 """Template script for IT 390R log‑analysis lab
 
 Students: complete the **TODO** sections in `analyze_failed_logins` and
-`analyze_successful_creds`.  All other tasks already work, so you can run the
+`analyze_successful_creds`. All other tasks already work, so you can run the
 script right away to explore the output format.
 
 Run examples
@@ -54,23 +54,23 @@ def _print_counter(counter: Counter, head1: str, head2: str, sort_keys=False):
     for key, cnt in items:
         print(f"{key:<{width}} {cnt:>8}")
 
-# ── TODO Task 1: fill this in ───────────────────────────────────────────────
+# ── Task 1: analyze failed logins ───────────────────────────────────────────
 
 def analyze_failed_logins(path: str, min_count: int):
-    """Parse *failed* SSH login attempts and show a count per source IP.
+    """Parse *failed* SSH login attempts and show a count per source IP."""
+    ip_counter = Counter()
 
-    You should:
-    1. Iterate over each line in ``path``.
-    2. Use ``FAILED_LOGIN_PATTERN`` to search the line.
-    3. Increment a Counter keyed by IP when a match is found.
-    4. After reading the file, *filter out* any IP whose count is
-       below ``min_count``.
-    5. Print the results using ``_print_counter``.
-    """
-    # TODO: replace the placeholder implementation below
-    print("[TODO] analyze_failed_logins not yet implemented — write your code here!\n")
+    with open(path, encoding="utf-8") as fp:
+        for line in fp:
+            match = FAILED_LOGIN_PATTERN.search(line)
+            if match:
+                ip = match.group("ip")
+                ip_counter[ip] += 1
 
-# ── Task 2 (already done) ───────────────────────────────────────────────────
+    filtered = {ip: count for ip, count in ip_counter.items() if count >= min_count}
+    _print_counter(Counter(filtered), "IP Address", "Attempts")
+
+# ── Task 2: connection volume (already done) ────────────────────────────────
 
 def connections(path: str):
     per_min = Counter()
@@ -83,21 +83,29 @@ def connections(path: str):
     print("Connections per minute")
     _print_counter(per_min, "Timestamp", "Count", sort_keys=True)
 
-# ── TODO Task 3: fill this in ───────────────────────────────────────────────
+# ── Task 3: analyze successful creds ────────────────────────────────────────
 
 def analyze_successful_creds(path: str):
-    """Display username/password pairs that *succeeded* and how many unique IPs used each.
+    """Display username/password pairs that *succeeded* and how many unique IPs used each."""
+    cred_map = defaultdict(set)
 
-    Steps:
-    • Iterate lines and apply ``SUCCESS_LOGIN_PATTERN``.
-    • Build a ``defaultdict(set)`` mapping ``(user, pw)`` → set of IPs.
-    • After reading, sort the mapping by descending IP count and print a
-      three‑column table (Username, Password, IP_Count).
-    """
-    # TODO: replace the placeholder implementation below
-    print("[TODO] analyze_successful_creds not yet implemented — write your code here!\n")
+    with open(path, encoding="utf-8") as fp:
+        for line in fp:
+            match = SUCCESS_LOGIN_PATTERN.search(line)
+            if match:
+                ip = match.group("ip")
+                username = match.group("user")
+                password = match.group("pw")
+                cred_map[(username, password)].add(ip)
 
-# ── Task 4 (bot fingerprints) already implemented ───────────────────────────
+    sorted_creds = sorted(cred_map.items(), key=lambda item: len(item[1]), reverse=True)
+
+    print("Username\tPassword\tUnique IPs")
+    print("------------------------------------------")
+    for (username, password), ips in sorted_creds:
+        print(f"{username}\t{password}\t{len(ips)}")
+
+# ── Task 4: bot fingerprints (already implemented) ──────────────────────────
 
 def identify_bots(path: str, min_ips: int):
     fp_map = defaultdict(set)
@@ -137,7 +145,6 @@ def main():
         analyze_successful_creds(args.logfile)
     elif args.task == "identify-bots":
         identify_bots(args.logfile, args.min_ips)
-
 
 if __name__ == "__main__":
     main()
